@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "install-all": "npm install && cd client && npm install && cd ../server && npm install",
+    "install-all": "npm install && npm install --prefix client && npm install --prefix server",
     "dev": "concurrently \"npm:server\" \"npm:client\"",
     "server": "cd server && node --watch server.js",
     "client": "cd client && npm run dev",
