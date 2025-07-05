@@ -1,0 +1,14 @@
+# Dependencies
+/node_modules
+/client/node_modules
+/server/node_modules
+
+# Build artifacts
+/client/dist
+
+# Environment variables
+/server/.env
+
+# IDE / OS files
+.DS_Store
+.vscode/
