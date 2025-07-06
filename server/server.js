@@ -76,7 +76,7 @@ app.get('/api/contacts', async (req, res) => {
     
     const contactsWithUnread = await Promise.all(
       contacts.map(async (contactName) => {
-        const conversationId = generateConversationId(contactName, 'Zubair');
+        const conversationId = generateConversationId(contactName, 'Zubair wani');
         const conversation = await Conversation.findOne({ conversationId });
         
         const adminLastViewed = conversation ? conversation.adminLastViewedAt : null;
