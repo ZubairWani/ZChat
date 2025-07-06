@@ -1,45 +1,3 @@
-// import { NotificationBadge } from '../components/NotificationBadge';
-// import { useEffect, useState } from 'react';
-// import { useApp } from '../context/AppContext';
-// import { useNavigate } from 'react-router-dom';
-
-// export function AdminDashboardPage() {
-//   const { user } = useApp();
-//   const navigate = useNavigate();
-//   const [contacts, setContacts] = useState([]);
-//   const [isLoading, setIsLoading] = useState(true);
-//   const [error, setError] = useState('');
-//   const [isVisible, setIsVisible] = useState(false);
-
-//   useEffect(() => {
-//     setIsVisible(true);
-//   }, []);
-
-//   useEffect(() => {
-//     const fetchContacts = async () => {
-//       try {
-//         const response = await fetch('/api/contacts');
-//         if (!response.ok) {
-//           throw new Error('Failed to fetch contacts');
-//         }
-//         const data = await response.json();
-//         setContacts(data);
-//       } catch (err) {
-//         setError(err.message);
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     };
-
-//     fetchContacts();
-//   }, []);
-
-//   const handleSelectChat = (conversationId) => {
-//     navigate(`/chat/${conversationId}`);
-//   };
-
-
-
 import { useEffect, useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -47,7 +5,7 @@ import io from 'socket.io-client';
 import { NotificationBadge } from '../components/NotificationBadge';
 
 // Initialize socket connection
-const socket = io('https://zchat-ydih.onrender.com', {
+const socket = io('https://zubairchat.onrender.com', {
   path: '/socket.io',
   transports: ['websocket'],
   reconnection: true,
