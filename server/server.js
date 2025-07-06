@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
+import initializeCronJobs from './utils/cron.js';
 
 // Import data and models
 import { friendKeys } from './data/friendKeys.js';
@@ -118,6 +119,12 @@ app.post('/api/conversations/mark-as-read', async (req, res) => {
   }
 });
 
+// Add this with your other API routes
+app.get("/api/health", (req, res) => {
+    return res.status(200).json({ status: "ok", message: "Backend is healthy" });
+});
+
+
 // Socket.IO Logic
 io.on('connection', (socket) => {
   console.log(`🔌 User connected: ${socket.id}`);
@@ -166,4 +173,5 @@ if (process.env.NODE_ENV === 'production') {
 const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+   initializeCronJobs(PORT);
 });
