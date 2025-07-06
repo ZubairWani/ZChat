@@ -1,7 +1,59 @@
-import { NotificationBadge } from '../components/NotificationBadge';
-import { useEffect, useState } from 'react';
+// import { NotificationBadge } from '../components/NotificationBadge';
+// import { useEffect, useState } from 'react';
+// import { useApp } from '../context/AppContext';
+// import { useNavigate } from 'react-router-dom';
+
+// export function AdminDashboardPage() {
+//   const { user } = useApp();
+//   const navigate = useNavigate();
+//   const [contacts, setContacts] = useState([]);
+//   const [isLoading, setIsLoading] = useState(true);
+//   const [error, setError] = useState('');
+//   const [isVisible, setIsVisible] = useState(false);
+
+//   useEffect(() => {
+//     setIsVisible(true);
+//   }, []);
+
+//   useEffect(() => {
+//     const fetchContacts = async () => {
+//       try {
+//         const response = await fetch('/api/contacts');
+//         if (!response.ok) {
+//           throw new Error('Failed to fetch contacts');
+//         }
+//         const data = await response.json();
+//         setContacts(data);
+//       } catch (err) {
+//         setError(err.message);
+//       } finally {
+//         setIsLoading(false);
+//       }
+//     };
+
+//     fetchContacts();
+//   }, []);
+
+//   const handleSelectChat = (conversationId) => {
+//     navigate(`/chat/${conversationId}`);
+//   };
+
+
+
+import { useEffect, useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
+import io from 'socket.io-client';
+import { NotificationBadge } from '../components/NotificationBadge';
+
+// Initialize socket connection
+const socket = io('https://zchat-ydih.onrender.com', {
+  path: '/socket.io',
+  transports: ['websocket'],
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000
+});
 
 export function AdminDashboardPage() {
   const { user } = useApp();
@@ -10,20 +62,25 @@ export function AdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isVisible, setIsVisible] = useState(false);
+  const contactsRef = useRef([]);
 
   useEffect(() => {
     setIsVisible(true);
+    return () => {
+      // Cleanup all socket listeners when component unmounts
+      socket.off('newMessage');
+      socket.off('dashboardNotification');
+    };
   }, []);
 
   useEffect(() => {
     const fetchContacts = async () => {
       try {
         const response = await fetch('/api/contacts');
-        if (!response.ok) {
-          throw new Error('Failed to fetch contacts');
-        }
+        if (!response.ok) throw new Error('Failed to fetch contacts');
         const data = await response.json();
         setContacts(data);
+        contactsRef.current = data;
       } catch (err) {
         setError(err.message);
       } finally {
@@ -32,9 +89,53 @@ export function AdminDashboardPage() {
     };
 
     fetchContacts();
+
+    // Socket.IO handler for dashboard notifications
+    const handleDashboardNotification = ({ conversationId }) => {
+      setContacts(prevContacts => {
+        const updatedContacts = prevContacts.map(contact => {
+          if (contact.conversationId === conversationId) {
+            return { ...contact, unreadCount: (contact.unreadCount || 0) + 1 };
+          }
+          return contact;
+        });
+        contactsRef.current = updatedContacts;
+        return updatedContacts;
+      });
+    };
+
+    // Listen for both regular messages and dashboard-specific notifications
+    socket.on('dashboardNotification', handleDashboardNotification);
+    socket.on('newMessage', handleDashboardNotification); // Fallback
+
+    return () => {
+      socket.off('dashboardNotification', handleDashboardNotification);
+      socket.off('newMessage', handleDashboardNotification);
+    };
   }, []);
 
-  const handleSelectChat = (conversationId) => {
+  const handleSelectChat = async (conversationId) => {
+    // Optimistically update UI
+    setContacts(prevContacts => 
+      prevContacts.map(contact => 
+        contact.conversationId === conversationId 
+          ? { ...contact, unreadCount: 0 } 
+          : contact
+      )
+    );
+
+    try {
+      await fetch('/api/conversations/mark-as-read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId }),
+      });
+    } catch (err) {
+      console.error('Error marking as read:', err);
+      // Revert if API call fails
+      setContacts(contactsRef.current);
+    }
+
     navigate(`/chat/${conversationId}`);
   };
 
